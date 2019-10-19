@@ -4,59 +4,58 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>Document</title>
-    <link
-      type="text/css"
-      rel="stylesheet"
-      href="http://unpkg.com/bootstrap/dist/css/bootstrap.min.css"
-    />
-    <link
-      type="text/css"
-      rel="stylesheet"
-      href="http://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css"
-    />
+    <title>Character Sheet</title>
+    <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="css/bootstrap-vue.min.css" />
   </head>
 
   <body>
     <div id="app">
-      <div class="container">
-        <div class="form-group">
-          <label for=""></label>
-          <input
-            type="text"
-            class="form-control"
-            name=""
-            id=""
-            aria-describedby="helpId"
-            placeholder=""
-            v-model="name"
-          />
-          <small id="helpId" class="form-text text-muted">Helper Text</small>
-          <input
-            type="button"
-            v-on:click="doAttack()"
-            value="Attack!"
-            class="btn btn-danger"
-          />
-        </div>
-        <b-card :title="message">
-          <h6 slot="header" class="mb-0">My name is {{ name }}.</h6>
-          <h6 slot="header" class="mb-0">I am {{ age }} years old.</h6>
+      <div class="">
+        <b-card>
+          <h6>My name is {{ name }}.</h6>
+          <h6>I am {{ age }} years old.</h6>
+          <h6>Hit Points: {{ hitpoints.total }}</h6>
+          <h6>Speed: {{ speed }}</h6>
+          <h6>AC: {{ armorclasstotal }}</h6>
+          <h6>
+            Weight Carried: {{ weightcarried }} of {{ weight_max }} ({{
+              encumbered
+            }})
+          </h6>
+          <h5>Attributes</h5>
+          <div class="row">
+            <div class="col-md-2" v-for="(attribute, index) in attributes">
+              <div class="card">
+                <div class="card-header">{{ attribute }}</div>
+                <div class="card-body small">{{ index }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col" v-for="(item, index) in hands">
+            <div class="card-body" v-if="equipment[index].damage !== null">
+              Weapon: {{ equipment[index].name }} Damage:
+              {{ equipment[index].damage[0] }}d{{
+                equipment[index].damage[1]
+              }}
+              +{{ attributes.strength }}
+            </div>
+          </div>
         </b-card>
       </div>
-      <!-- New code here -->
-
-      <!-- New code here -->
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <script src="http://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js"></script>
+    <script src="js/vue.min.js"></script>
+    <script src="js/bootstrap-vue.min.js"></script>
     <script>
       var app = new Vue({
         el: "#app",
         data: {
-          message: "About Me!",
-          name: "Branden",
+          name: "Character Name",
           age: "12",
+          speed: 120,
+          experience: 0,
+          level: 1,
           attributes: {
             strength: 0,
             dexterity: 0,
@@ -72,53 +71,87 @@
             total: 10,
             current: 0
           },
-          hands: {
-            dominant: {
-              id: 3,
+          hands: [0, 1],
+          armor: 2,
+          equipment: [
+            {
               name: "Sword",
               hitbonus: 0,
               type: "slashing",
               damage: [1, 8],
-              weight: 30
+              weight: 30,
+              acbonus: 0
             },
-            offhand: {
-              id: 1,
-              name: "Wooden Shield",
-              acbonus: 1,
-              weight: 10
-            }
-          },
-          weapons: {
-            primary: {
-              id: 3,
-              name: "Sword",
+            {
+              name: "Shield",
               hitbonus: 0,
-              type: "slashing",
-              damage: [1, 8],
+              type: "none",
+              damage: null,
+              weight: 10,
+              acbonus: 1
+            },
+            {
+              id: 4,
+              name: "Chainmail",
+              acbonus: 3,
               weight: 30
             }
+          ],
+          race: {
+            name: "Human",
+            attribute_max: 7,
+            speed: 120
           },
-          armor: {
-            id: 4,
-            name: "Chainmail",
-            acbonus: 3,
-            weight: 30
-          },
-          shield: {
-            id: 1,
-            name: "Wooden Shield",
-            acbonus: 1,
-            weight: 10
+          class: {
+            name: "Cavalier",
+            hitdice: "d10"
           }
         },
         computed: {
+          weightcarried: function() {
+            if (this.equipment.length === 0) {
+              return 0;
+            } else {
+              // Loop through this.equipment and return the total of the weight
+              let total = 0;
+              // for (item in this.equipment) {
+              this.equipment.forEach(function(item) {
+                total = total + item.weight;
+              });
+              return total;
+            }
+          },
+          weight_max: function() {
+            return (this.attributes.strength + 4) * 25;
+          },
+          encumbered: function() {
+            if (this.weightcarried > this.weight_max / 2) {
+              this.speed = this.race.speed / 2;
+              return "encumbered";
+            } else {
+              this.speed = this.race.speed;
+              return "unencumbered";
+            }
+          },
           armorclasstotal: function() {
-            return (
-              this.attributes.dexterity +
-              this.armorclass +
-              this.armor.acbonus +
-              this.offhand.acbonus
-            );
+            let base = this.armorclass + this.attributes.dexterity;
+
+            if (this.armor !== "") {
+              base = base + this.equipment[this.armor].acbonus;
+            }
+
+            for (item in this.hands) {
+              base = base + this.equipment[item].acbonus;
+            }
+
+            if (
+              this.armor.acbonus !== undefined &&
+              this.armor.acbonus !== null
+            ) {
+              base = base + this.armor.acbonus;
+            }
+
+            return base;
           },
           notice: function() {
             return this.attributes.wisdom + 10;

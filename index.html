@@ -13,21 +13,34 @@
     <div id="app">
       <div class="">
         <b-card>
-          <h6>My name is {{ name }}.</h6>
-          <h6>I am {{ age }} years old.</h6>
-          <h6>Hit Points: {{ hitpoints.total }}</h6>
-          <h6>Speed: {{ speed }}</h6>
-          <h6>AC: {{ armorclasstotal }}</h6>
-          <h6>
+          <div class="form-group">
+            <label for="input-live">Name:</label>
+            <b-form-input
+              v-model="name"
+              placeholder="Enter your name"
+            ></b-form-input>
+          </div>
+
+          <div class="form-group">{{ race.name }} {{ class_type.name }}</div>
+          <div class="form-group">Movement Speed: {{ speed }}</div>
+          <div class="form-group">Armor Class: {{ armorclasstotal }}</div>
+          <div class="form-group">
             Weight Carried: {{ weightcarried }} of {{ weight_max }} ({{
               encumbered
             }})
-          </h6>
+          </div>
           <h5>Attributes</h5>
           <div class="row">
             <div class="col-md-2" v-for="(attribute, index) in attributes">
               <div class="card">
-                <div class="card-header">{{ attribute }}</div>
+                <div class="card-header">
+                  <b-form-input
+                    v-model="attribute"
+                    placeholder="index"
+                    @blur.native="updateAttribute(index,attribute)"
+                    lazy-formatter
+                  ></b-form-input>
+                </div>
                 <div class="card-body small">{{ index }}</div>
               </div>
             </div>
@@ -57,7 +70,7 @@
           experience: 0,
           level: 1,
           attributes: {
-            strength: 0,
+            strength: 4,
             dexterity: 0,
             constitution: 0,
             intelligence: 0,
@@ -102,7 +115,7 @@
             attribute_max: 7,
             speed: 120
           },
-          class: {
+          class_type: {
             name: "Cavalier",
             hitdice: "d10"
           }
@@ -125,9 +138,15 @@
             return (this.attributes.strength + 4) * 25;
           },
           encumbered: function() {
-            if (this.weightcarried > this.weight_max / 2) {
+            if (this.weightcarried >= this.weight_max / 2) {
               this.speed = this.race.speed / 2;
-              return "encumbered";
+
+              if (this.weightcarried > this.weight_max) {
+                this.speed = 0;
+                return "immobile";
+              } else {
+                return "encumbered";
+              }
             } else {
               this.speed = this.race.speed;
               return "unencumbered";
@@ -158,6 +177,30 @@
           }
         },
         methods: {
+          updateAttribute: function(index, newvalue) {
+            switch (index) {
+              case "strength":
+                this.attributes.strength = newvalue * 1;
+                break;
+              case "dexterity":
+                this.attributes.dexterity = newvalue * 1;
+                break;
+              case "intelligence":
+                this.attributes.intelligence = newvalue * 1;
+                break;
+              case "wisdom":
+                this.attributes.wisdom = newvalue * 1;
+                break;
+              case "constitution":
+                this.attributes.constitution = newvalue * 1;
+                break;
+              case "charisma":
+                this.attributes.charisma = newvalue * 1;
+                break;
+            }
+
+            // = newvalue;
+          },
           doAttack: function() {
             let roll20 = Math.ceil(Math.random() * 20);
 
